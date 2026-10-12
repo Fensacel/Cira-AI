@@ -1,4 +1,4 @@
-# Arsitektur Teknis: AIgweh (Web App)
+# Arsitektur Teknis: Cira AI (Web App)
 
 **Versi:** 0.2 (Draft)
 **Acuan:** `PRD.md`, `SYSTEM_PROMPT.md`
@@ -61,7 +61,7 @@
 ## 3. Struktur Folder (Usulan)
 
 ```
-aigweh/
+cira-ai/
 ├── PRD.md
 ├── ARCHITECTURE.md
 ├── SYSTEM_PROMPT.md

@@ -1,4 +1,4 @@
-# AIgweh
+# Cira AI
 
 Aplikasi chat AI berbasis web yang serba bisa (All-in-One Expert) untuk **koding, matematika, sains, analisis data, dan penulisan kreatif**. Default berbahasa Indonesia.
 
@@ -22,26 +22,45 @@ Next.js (App Router), TypeScript, Tailwind CSS, Vercel AI SDK, KaTeX, shiki, Ver
 |------|-----|
 | `PRD.md` | Product Requirements Document |
 | `ARCHITECTURE.md` | Arsitektur, struktur folder, API, keamanan |
-| `SYSTEM_PROMPT.md` | System prompt AIgweh dan test case |
+| `SYSTEM_PROMPT.md` | System prompt Cira AI dan test case |
 
 ## Persyaratan
 
 - Node.js LTS (20 atau lebih baru)
 - npm atau pnpm
 
-## Setup (Rencana)
+## Setup
 
 ```bash
-cp .env.example .env.local   # isi API key provider
+cp .env.example .env.local   # isi NINEROUTER_API_KEY
 npm install
 npm run dev                  # http://localhost:3000
 ```
 
-> Perintah di atas berlaku setelah proyek Next.js dibuat sesuai `ARCHITECTURE.md`.
+Pastikan 9router sudah berjalan di `http://localhost:20128` sebelum menjalankan aplikasi.
+
+## Script
+
+| Perintah | Fungsi |
+|----------|--------|
+| `npm run dev` | Jalankan server development |
+| `npm run build` | Build produksi |
+| `npm run start` | Jalankan hasil build |
+| `npm run lint` | Jalankan ESLint |
+| `npm run test` | Jalankan test dengan Vitest |
+| `npm run typecheck` | Cek tipe TypeScript (`tsc --noEmit`) |
 
 ## Environment Variables
 
-Lihat `.env.example`. API key hanya dibaca di server. Variabel yang kosong menonaktifkan provider terkait.
+Lihat `.env.example`. API key hanya dibaca di server dan tidak boleh masuk ke browser.
+
+| Variabel | Wajib | Keterangan |
+|----------|-------|------------|
+| `NINEROUTER_BASE_URL` | Ya | Base URL 9router, default `http://localhost:20128/v1` |
+| `NINEROUTER_API_KEY` | Ya | API key dari dashboard 9router (Bearer token) |
+| `AIGWEH_MODELS` | Tidak | Daftar model dipisah koma, format `provider/model`. Kosongkan untuk memakai default di `lib/models.ts` |
+
+Jangan commit file `.env` atau `.env.local`. Keduanya sudah masuk `.gitignore`.
 
 ## Lisensi
 

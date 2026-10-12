@@ -1,12 +1,12 @@
-# AIGweh Design System Specification (DESIGN.md)
+# Cira AI Design System Specification (DESIGN.md)
 
-Dokumentasi sistem desain resmi untuk platform antarmuka AI Chat & Cognitive Engine **AIGweh**. Dirancang untuk memberikan pengalaman rekayasa perangkat lunak dan interaksi AI yang cepat, presisi, minim distraksi, dan estetis dengan tema gelap modern (*dark sleek architecture*).
+Dokumentasi sistem desain resmi untuk platform antarmuka AI Chat & Cognitive Engine **Cira AI**. Dirancang untuk memberikan pengalaman rekayasa perangkat lunak dan interaksi AI yang cepat, presisi, minim distraksi, dan estetis dengan tema gelap modern (*dark sleek architecture*).
 
 ---
 
 ## 1. Brand Identity & Filosofi Desain
 
-* **Nama Produk**: AIGweh (AI Cognitive Engine & Chat Workspace)
+* **Nama Produk**: Cira AI (AI Cognitive Engine & Chat Workspace)
 * **Tone & Persona**: Intelijen, Cepat (Sub-second latency), Presisi Teknis, Modular, Developer-First.
 * **Prinsip Visual**:
   1. **Content & Code as Protagonist**: Konten penalaran AI, blok kode terformat, dan topologi arsitektur menjadi fokus utama antarmuka.
@@ -17,7 +17,7 @@ Dokumentasi sistem desain resmi untuk platform antarmuka AI Chat & Cognitive Eng
 
 ## 2. Palet Warna (Color System Tokens)
 
-Sistem warna AIGweh mengandalkan mode gelap mutlak (*true dark & obsidian navy*) yang nyaman di mata untuk sesi interaksi intensif berjam-jam:
+Sistem warna Cira AI mengandalkan mode gelap mutlak (*true dark & obsidian navy*) yang nyaman di mata untuk sesi interaksi intensif berjam-jam:
 
 ### 🌌 Background & Surface Layers
 | Token | Nilai Hex | Penggunaan |
@@ -88,7 +88,7 @@ Sistem warna AIGweh mengandalkan mode gelap mutlak (*true dark & obsidian navy*)
 
 ### 1. Persistent Dashboard Shell
 - **Left Sidebar (260px)**:
-  - Header dengan logo bintang neural AIGweh dan nama brand.
+  - Header dengan logo bintang neural Cira AI dan nama brand.
   - Tombol *"New Chat"* berbingkai dengan shortcut trigger `⌘N`.
   - Riwayat sesi percakapan hierarkis (*Hari Ini*, *Kemarin*, *7 Hari Terakhir*).
   - Navigasi global: *Model Hub*, *Prompt Library*, *Settings*.

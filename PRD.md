@@ -1,4 +1,4 @@
-# PRD: AIgweh (Web App)
+# PRD: Cira AI (Web App)
 
 **Versi:** 0.2 (Draft)
 **Tanggal:** 2026-10-12
@@ -8,7 +8,7 @@
 
 ## 1. Ringkasan Produk
 
-AIgweh adalah aplikasi chat AI berbasis web yang serba bisa (All-in-One Expert) untuk **koding, matematika, sains, analisis data, dan penulisan kreatif**. Default berbahasa Indonesia dan mengikuti bahasa pengguna.
+Cira AI adalah aplikasi chat AI berbasis web yang serba bisa (All-in-One Expert) untuk **koding, matematika, sains, analisis data, dan penulisan kreatif**. Default berbahasa Indonesia dan mengikuti bahasa pengguna.
 
 ## 2. Latar Belakang & Masalah
 
