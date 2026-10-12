@@ -119,7 +119,7 @@ export async function POST(req: Request): Promise<Response> {
         if (part.type !== 'finish') return undefined;
         const outputTokens = part.totalUsage.outputTokens;
         const seconds = (Date.now() - startedAt) / 1000;
-        const metadata: ChatMetadata = { outputTokens };
+        const metadata: ChatMetadata = { modelId, outputTokens };
         if (outputTokens !== undefined && seconds > 0) {
           metadata.tokensPerSecond = Number((outputTokens / seconds).toFixed(1));
         }

@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -164,6 +165,9 @@ export function ChatView({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
+  // true selama pengguna berada di dekat bawah. Jika pengguna scroll ke atas, auto-scroll berhenti.
+  const stickToBottomRef = useRef(true);
 
   // Sesi disimpan di registry, bukan di komponen. Pindah chat tidak menghentikan stream yang berjalan.
   const { messages, status, stop, error, clearError } = useChat({
@@ -171,6 +175,22 @@ export function ChatView({
   });
 
   const busy = status === 'submitted' || status === 'streaming';
+
+  function scrollToBottom() {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  // Ikut turun saat pesan atau isi streaming berubah, selama pengguna masih di dekat bawah.
+  useEffect(() => {
+    if (stickToBottomRef.current) scrollToBottom();
+  }, [messages, status]);
+
+  function handleScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight <= 120;
+  }
   // Saat /api/models belum selesai, selectedModel masih kosong. Pakai model pertama agar request tidak mengirim modelId kosong.
   const activeModel = selectedModel || models[0]?.id || '';
   const modelLabel = models.find((model) => model.id === activeModel)?.label ?? activeModel;
@@ -260,6 +280,8 @@ export function ChatView({
     const files = attachments;
     setInput('');
     setAttachments([]);
+    // Saat kirim, pengguna selalu dibawa ke bawah.
+    stickToBottomRef.current = true;
     void sendChatMessage(chatId, { text, files }, activeModel);
   }
 
@@ -318,7 +340,7 @@ export function ChatView({
           </button>
         </header>
 
-        <main className="relative flex-1 overflow-y-auto">
+        <main ref={scrollRef} onScroll={handleScroll} className="relative flex-1 overflow-y-auto">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-32 left-1/2 h-[360px] w-[720px] -translate-x-1/2 rounded-full bg-primary-container/10 blur-[140px]" />
           </div>
@@ -343,10 +365,15 @@ export function ChatView({
                 );
               }
 
+              const answeredModelId = getMessageMetadata(message)?.modelId;
+              const answeredLabel = answeredModelId
+                ? (models.find((model) => model.id === answeredModelId)?.label ?? answeredModelId)
+                : modelLabel;
+
               return (
                 <div key={message.id} className="flex flex-col gap-5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[16px] font-semibold text-on-surface">{modelLabel}</span>
+                    <span className="text-[16px] font-semibold text-on-surface">{answeredLabel}</span>
                   </div>
                   <div className="max-w-[80%] text-[16px] leading-[1.6] text-on-surface">
                     <MarkdownView content={text} />
