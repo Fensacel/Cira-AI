@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* Token dari DESIGN.md (Obsidian Navy + Electric Indigo + Neural Cyan) */
+@theme {
+  --color-surface-container-lowest: #121212;
+  --color-surface: #1a1a1a;
+  --color-surface-container-low: #1e1e1e;
+  --color-surface-container: #232323;
+  --color-surface-container-high: #2c2c2c;
+  --color-surface-container-highest: #363636;
+  --color-surface-bright: #404040;
+
+  --color-on-surface: #f4f4f5;
+  --color-on-surface-variant: #a1a1aa;
+  --color-outline: #71717a;
+  --color-outline-disabled: #52525b;
+
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-subtle: rgba(59, 130, 246, 0.12);
+  --color-primary-container: rgba(59, 130, 246, 0.2);
+  --color-on-primary-container: #bfdbfe;
+  --color-accent-cyan: #06b6d4;
+  --color-accent-violet: #8b5cf6;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+}
+
+/* Scrollbar tipis agar konsisten di dark mode */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Kelas ikon Material Symbols. Tanpa ini, nama ligature tampil sebagai teks. */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+

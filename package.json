@@ -1,0 +1,46 @@
+{
+  "name": "aigweh",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cira AI: aplikasi chat AI berbasis web (All-in-One Expert) dengan 9router sebagai gateway.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.67",
+    "@ai-sdk/react": "^4.0.140",
+    "ai": "^7.0.137",
+    "exceljs": "^4.4.0",
+    "idb": "^8.0.4",
+    "jszip": "^3.10.2",
+    "katex": "^0.16.11",
+    "mammoth": "^1.13.0",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "shiki": "^4.5.0",
+    "unpdf": "^1.8.1",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.4.0",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.3"
+  }
+}
