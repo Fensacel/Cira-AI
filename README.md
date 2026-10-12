@@ -59,6 +59,10 @@ Lihat `.env.example`. API key hanya dibaca di server dan tidak boleh masuk ke br
 | `NINEROUTER_BASE_URL` | Ya | Base URL 9router, default `http://localhost:20128/v1` |
 | `NINEROUTER_API_KEY` | Ya | API key dari dashboard 9router (Bearer token) |
 | `AIGWEH_MODELS` | Tidak | Daftar model dipisah koma, format `provider/model`. Kosongkan untuk memakai default di `lib/models.ts` |
+| `SUPABASE_URL` | Ya | URL project Supabase, untuk penyimpanan memori |
+| `SUPABASE_SERVICE_ROLE_KEY` | Ya | Service role key Supabase. Hanya server, jangan dikirim ke browser |
+
+Jalankan `supabase/schema.sql` di SQL Editor Supabase sebelum memakai memori.
 
 Jangan commit file `.env` atau `.env.local`. Keduanya sudah masuk `.gitignore`.
 

@@ -20,11 +20,13 @@ import {
   isDocumentPart,
   uploadDocument,
 } from '@/lib/document-parts';
+import { canPreviewDocument, getDocumentFile, rememberDocumentFile } from '@/lib/document-files';
 import type { ChatRecord } from '@/lib/db';
 import { getChatSession, regenerateChatMessage, sendChatMessage } from '@/lib/chat-registry';
 import type { ChatMetadata, ModelOption } from '@/lib/types';
 import { ChatSidebar } from './ChatSidebar';
 import { MarkdownView } from './MarkdownView';
+import { DocumentPreview } from './DocumentPreview';
 import { MemoryPanel } from './MemoryPanel';
 
 type ChatViewProps = {
@@ -110,20 +112,41 @@ function UserImages({ message }: { message: UIMessage }) {
   );
 }
 
-function UserDocuments({ message }: { message: UIMessage }) {
+function UserDocuments({
+  message,
+  onPreview,
+}: {
+  message: UIMessage;
+  onPreview: (filename: string) => void;
+}) {
   const documents = message.parts.filter(isDocumentPart);
   if (documents.length === 0) return null;
   return (
     <ul className="mb-2 flex flex-wrap gap-2">
-      {documents.map((document, index) => (
-        <li
-          key={`${message.id}-doc-${index}`}
-          className="flex items-center gap-2 rounded-lg bg-surface-container px-3 py-1.5 text-[12px] text-on-surface"
-        >
-          <span className="material-symbols-outlined text-[16px] text-primary">description</span>
-          <span className="max-w-56 truncate">{document.filename ?? 'Dokumen'}</span>
-        </li>
-      ))}
+      {documents.map((document, index) => {
+        const filename = document.filename ?? 'Dokumen';
+        const previewable = document.filename !== undefined && canPreviewDocument(filename);
+        const cached = previewable && getDocumentFile(filename) !== undefined;
+        return (
+          <li
+            key={`${message.id}-doc-${index}`}
+            className="flex items-center gap-2 rounded-lg bg-surface-container px-3 py-1.5 text-[12px] text-on-surface"
+          >
+            <span className="material-symbols-outlined text-[16px] text-primary">description</span>
+            <span className="max-w-56 truncate">{filename}</span>
+            {cached && (
+              <button
+                type="button"
+                onClick={() => onPreview(filename)}
+                aria-label={`Preview ${filename}`}
+                className="text-outline transition-colors hover:text-primary"
+              >
+                <span className="material-symbols-outlined text-[16px]">visibility</span>
+              </button>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -162,6 +185,7 @@ export function ChatView({
   const [attachError, setAttachError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [showMemory, setShowMemory] = useState(false);
+  const [previewFilename, setPreviewFilename] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -225,7 +249,9 @@ export function ChatView({
           setAttachError(`Maksimal ${MAX_DOCUMENTS_PER_MESSAGE} dokumen per pesan.`);
           continue;
         }
-        added.push(await uploadDocument(file));
+        const part = await uploadDocument(file);
+        rememberDocumentFile(file.name, file);
+        added.push(part);
       }
       if (files.length > room) {
         setAttachError(`Hanya ${room} lampiran lagi yang bisa ditambahkan.`);
@@ -358,7 +384,7 @@ export function ChatView({
                   <div key={message.id} className="flex flex-col items-end gap-2">
                     <div className="max-w-[80%] rounded-3xl bg-surface-container-high px-5 py-3 text-[16px] leading-[1.6] text-on-surface">
                       <UserImages message={message} />
-                      <UserDocuments message={message} />
+                      <UserDocuments message={message} onPreview={setPreviewFilename} />
                       <p className="whitespace-pre-wrap break-words">{text}</p>
                     </div>
                   </div>
@@ -431,6 +457,16 @@ export function ChatView({
                       <div className="flex h-16 max-w-44 items-center gap-2 rounded-lg bg-surface-container-high px-3 text-[12px] text-on-surface">
                         <span className="material-symbols-outlined text-[18px] text-primary">description</span>
                         <span className="truncate">{file.filename ?? 'Dokumen'}</span>
+                        {file.filename && canPreviewDocument(file.filename) && getDocumentFile(file.filename) && (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewFilename(file.filename ?? null)}
+                            aria-label={`Preview ${file.filename}`}
+                            className="shrink-0 text-outline transition-colors hover:text-primary"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">visibility</span>
+                          </button>
+                        )}
                       </div>
                     ) : (
                       /* Data URL dari browser; next/image tidak mendukung sumber ini. */
@@ -556,6 +592,13 @@ export function ChatView({
           </p>
         </div>
       </div>
+      {previewFilename && getDocumentFile(previewFilename) && (
+        <DocumentPreview
+          key={previewFilename}
+          file={getDocumentFile(previewFilename)!}
+          onClose={() => setPreviewFilename(null)}
+        />
+      )}
     </div>
   );
 }

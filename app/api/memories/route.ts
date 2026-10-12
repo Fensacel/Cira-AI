@@ -3,8 +3,8 @@ import { getMemoryStore } from '@/lib/memory-store';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(req: Request): Response {
+export async function GET(req: Request): Promise<Response> {
   const owner = getOwner(req);
-  const memories = getMemoryStore().list(owner.id);
+  const memories = await getMemoryStore().list(owner.id);
   return withOwnerCookie(Response.json({ memories }), owner);
 }

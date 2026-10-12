@@ -1,7 +1,5 @@
-import { mkdirSync } from 'node:fs';
-import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { DatabaseSync } from 'node:sqlite';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 export type MemoryItem = {
   id: string;
@@ -10,63 +8,43 @@ export type MemoryItem = {
 };
 
 export type MemoryStore = {
-  list(ownerId: string): MemoryItem[];
+  list(ownerId: string): Promise<MemoryItem[]>;
   /** Menambah fakta baru. Mengembalikan jumlah yang benar-benar tersimpan. */
-  add(ownerId: string, contents: string[]): number;
+  add(ownerId: string, contents: string[]): Promise<number>;
   /** Menghapus satu memori milik owner. Mengembalikan true jika ada yang terhapus. */
-  remove(ownerId: string, id: string): boolean;
-  close(): void;
+  remove(ownerId: string, id: string): Promise<boolean>;
+};
+
+/** Operasi penyimpanan mentah. Dipisah agar aturan dedupe dan batas bisa diuji tanpa Supabase. */
+export type MemoryRepository = {
+  list(ownerId: string): Promise<MemoryItem[]>;
+  insert(row: { id: string; ownerId: string; content: string }): Promise<void>;
+  delete(ownerId: string, id: string): Promise<boolean>;
 };
 
 export const MAX_MEMORIES_PER_OWNER = 50;
 export const MAX_MEMORY_CHARS = 300;
 
-type MemoryRow = { id: string; content: string; createdAt: number };
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function normalizeContent(content: string): string {
   return content.replace(/\s+/g, ' ').trim().slice(0, MAX_MEMORY_CHARS);
 }
 
-/** Membuka (atau membuat) database memori. Gunakan ':memory:' untuk test. */
-export function openMemoryStore(file: string): MemoryStore {
-  if (file !== ':memory:') {
-    mkdirSync(path.dirname(file), { recursive: true });
-  }
-  const db = new DatabaseSync(file);
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS memories (
-      id TEXT PRIMARY KEY,
-      owner_id TEXT NOT NULL,
-      content TEXT NOT NULL,
-      created_at INTEGER NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS memories_owner ON memories (owner_id, created_at);
-  `);
-
-  const listStmt = db.prepare(
-    'SELECT id, content, created_at AS createdAt FROM memories WHERE owner_id = ? ORDER BY created_at ASC',
-  );
-  const insertStmt = db.prepare(
-    'INSERT INTO memories (id, owner_id, content, created_at) VALUES (?, ?, ?, ?)',
-  );
-  const deleteStmt = db.prepare('DELETE FROM memories WHERE owner_id = ? AND id = ?');
-
-  function list(ownerId: string): MemoryItem[] {
-    return listStmt.all(ownerId) as unknown as MemoryRow[];
-  }
-
+export function createMemoryStore(repo: MemoryRepository): MemoryStore {
   return {
-    list,
+    list: (ownerId) => repo.list(ownerId),
 
-    add(ownerId, contents) {
-      const existing = new Set(list(ownerId).map((item) => item.content.toLowerCase()));
-      let count = list(ownerId).length;
+    async add(ownerId, contents) {
+      const current = await repo.list(ownerId);
+      const existing = new Set(current.map((item) => item.content.toLowerCase()));
+      let count = current.length;
       let added = 0;
       for (const raw of contents) {
         const content = normalizeContent(raw);
         if (!content || existing.has(content.toLowerCase())) continue;
         if (count >= MAX_MEMORIES_PER_OWNER) break;
-        insertStmt.run(randomUUID(), ownerId, content, Date.now());
+        await repo.insert({ id: randomUUID(), ownerId, content });
         existing.add(content.toLowerCase());
         count += 1;
         added += 1;
@@ -74,24 +52,64 @@ export function openMemoryStore(file: string): MemoryStore {
       return added;
     },
 
-    remove(ownerId, id) {
-      const result = deleteStmt.run(ownerId, id);
-      return Number(result.changes) > 0;
+    remove: (ownerId, id) => repo.delete(ownerId, id),
+  };
+}
+
+type MemoryRow = { id: string; content: string; created_at: string };
+
+function createSupabaseRepository(client: SupabaseClient): MemoryRepository {
+  return {
+    async list(ownerId) {
+      const { data, error } = await client
+        .from('memories')
+        .select('id, content, created_at')
+        .eq('owner_id', ownerId)
+        .order('created_at', { ascending: true });
+      if (error) throw new Error(`Gagal membaca memori: ${error.message}`);
+      return ((data ?? []) as MemoryRow[]).map((row) => ({
+        id: row.id,
+        content: row.content,
+        createdAt: Date.parse(row.created_at),
+      }));
     },
 
-    close() {
-      db.close();
+    async insert({ id, ownerId, content }) {
+      const { error } = await client
+        .from('memories')
+        .insert({ id, owner_id: ownerId, content });
+      if (error) throw new Error(`Gagal menyimpan memori: ${error.message}`);
+    },
+
+    async delete(ownerId, id) {
+      // id bukan UUID tidak mungkin ada di tabel. Dicek dulu agar Postgres tidak error.
+      if (!UUID_PATTERN.test(id)) return false;
+      const { data, error } = await client
+        .from('memories')
+        .delete()
+        .eq('owner_id', ownerId)
+        .eq('id', id)
+        .select('id');
+      if (error) throw new Error(`Gagal menghapus memori: ${error.message}`);
+      return (data ?? []).length > 0;
     },
   };
 }
 
-const globalForMemory = globalThis as typeof globalThis & { __aigwehMemory?: MemoryStore };
+const globalForMemory = globalThis as typeof globalThis & { __ciraMemory?: MemoryStore };
 
-/** Singleton per proses. Disimpan di globalThis agar tidak terbuka berulang saat hot reload dev. */
+/** Singleton per proses. Disimpan di globalThis agar tidak membuat client berulang saat hot reload dev. */
 export function getMemoryStore(): MemoryStore {
-  if (!globalForMemory.__aigwehMemory) {
-    const dir = process.env.AIGWEH_DATA_DIR?.trim() || path.join(process.cwd(), 'data');
-    globalForMemory.__aigwehMemory = openMemoryStore(path.join(dir, 'aigweh.db'));
+  if (!globalForMemory.__ciraMemory) {
+    const url = process.env.SUPABASE_URL?.trim();
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+    if (!url || !serviceRoleKey) {
+      throw new Error('SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY belum diatur di environment server.');
+    }
+    const client = createClient(url, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    globalForMemory.__ciraMemory = createMemoryStore(createSupabaseRepository(client));
   }
-  return globalForMemory.__aigwehMemory;
+  return globalForMemory.__ciraMemory;
 }

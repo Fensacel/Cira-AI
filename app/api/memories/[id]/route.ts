@@ -9,6 +9,6 @@ export async function DELETE(
 ): Promise<Response> {
   const owner = getOwner(req);
   const { id } = await params;
-  const removed = getMemoryStore().remove(owner.id, id);
+  const removed = await getMemoryStore().remove(owner.id, id);
   return withOwnerCookie(Response.json({ removed }, { status: removed ? 200 : 404 }), owner);
 }

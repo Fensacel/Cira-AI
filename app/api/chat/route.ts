@@ -87,7 +87,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const provider = getNineRouterProvider();
     const startedAt = Date.now();
-    const memories = getMemoryTexts(owner.id);
+    const memories = await getMemoryTexts(owner.id);
     const result = streamText({
       model: provider(modelId),
       system: buildSystemPrompt(SYSTEM_PROMPT, memories),

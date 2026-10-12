@@ -1,38 +1,62 @@
 import { describe, expect, it } from 'vitest';
-import { openMemoryStore, MAX_MEMORIES_PER_OWNER, MAX_MEMORY_CHARS } from '@/lib/memory-store';
+import {
+  createMemoryStore,
+  MAX_MEMORIES_PER_OWNER,
+  MAX_MEMORY_CHARS,
+  type MemoryItem,
+  type MemoryRepository,
+} from '@/lib/memory-store';
 import { buildSystemPrompt, parseExtraction, MAX_NEW_MEMORIES_PER_TURN } from '@/lib/memory';
 import { getOwner, OWNER_COOKIE } from '@/lib/owner';
 
+/** Repositori in-memory untuk test. Meniru perilaku tabel memories di Supabase. */
+function createFakeRepository(): MemoryRepository {
+  const rows: (MemoryItem & { ownerId: string })[] = [];
+  return {
+    async list(ownerId) {
+      return rows
+        .filter((row) => row.ownerId === ownerId)
+        .map(({ id, content, createdAt }) => ({ id, content, createdAt }));
+    },
+    async insert({ id, ownerId, content }) {
+      rows.push({ id, ownerId, content, createdAt: Date.now() });
+    },
+    async delete(ownerId, id) {
+      const index = rows.findIndex((row) => row.ownerId === ownerId && row.id === id);
+      if (index === -1) return false;
+      rows.splice(index, 1);
+      return true;
+    },
+  };
+}
+
 describe('memory store', () => {
-  it('menyimpan, dedupe, dan memisahkan per owner', () => {
-    const store = openMemoryStore(':memory:');
-    expect(store.add('owner-a', ['Nama user: Budi', 'nama user: budi', '  '])).toBe(1);
-    expect(store.add('owner-b', ['Nama user: Sari'])).toBe(1);
-    expect(store.list('owner-a').map((m) => m.content)).toEqual(['Nama user: Budi']);
-    expect(store.list('owner-b').map((m) => m.content)).toEqual(['Nama user: Sari']);
-    store.close();
+  it('menyimpan, dedupe, dan memisahkan per owner', async () => {
+    const store = createMemoryStore(createFakeRepository());
+    expect(await store.add('owner-a', ['Nama user: Budi', 'nama user: budi', '  '])).toBe(1);
+    expect(await store.add('owner-b', ['Nama user: Sari'])).toBe(1);
+    expect((await store.list('owner-a')).map((m) => m.content)).toEqual(['Nama user: Budi']);
+    expect((await store.list('owner-b')).map((m) => m.content)).toEqual(['Nama user: Sari']);
   });
 
-  it('memotong teks panjang dan membatasi jumlah per owner', () => {
-    const store = openMemoryStore(':memory:');
+  it('memotong teks panjang dan membatasi jumlah per owner', async () => {
+    const store = createMemoryStore(createFakeRepository());
     const long = 'x'.repeat(MAX_MEMORY_CHARS + 50);
-    store.add('owner-a', [long]);
-    expect(store.list('owner-a')[0].content.length).toBe(MAX_MEMORY_CHARS);
+    await store.add('owner-a', [long]);
+    expect((await store.list('owner-a'))[0].content.length).toBe(MAX_MEMORY_CHARS);
 
     const many = Array.from({ length: MAX_MEMORIES_PER_OWNER + 10 }, (_, i) => `fakta ${i}`);
-    expect(store.add('owner-a', many)).toBe(MAX_MEMORIES_PER_OWNER - 1);
-    expect(store.list('owner-a')).toHaveLength(MAX_MEMORIES_PER_OWNER);
-    store.close();
+    expect(await store.add('owner-a', many)).toBe(MAX_MEMORIES_PER_OWNER - 1);
+    expect(await store.list('owner-a')).toHaveLength(MAX_MEMORIES_PER_OWNER);
   });
 
-  it('hanya menghapus memori milik owner yang sama', () => {
-    const store = openMemoryStore(':memory:');
-    store.add('owner-a', ['fakta A']);
-    const [item] = store.list('owner-a');
-    expect(store.remove('owner-b', item.id)).toBe(false);
-    expect(store.remove('owner-a', item.id)).toBe(true);
-    expect(store.list('owner-a')).toEqual([]);
-    store.close();
+  it('hanya menghapus memori milik owner yang sama', async () => {
+    const store = createMemoryStore(createFakeRepository());
+    await store.add('owner-a', ['fakta A']);
+    const [item] = await store.list('owner-a');
+    expect(await store.remove('owner-b', item.id)).toBe(false);
+    expect(await store.remove('owner-a', item.id)).toBe(true);
+    expect(await store.list('owner-a')).toEqual([]);
   });
 });
 

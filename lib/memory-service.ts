@@ -12,11 +12,10 @@ Jangan menyimpan data sensitif seperti password, nomor kartu, atau alamat rumah.
 Jangan mengulang fakta yang sudah tersimpan.
 Balas HANYA dengan JSON array berisi string, maksimal 3 item, tiap item satu kalimat singkat berbahasa Indonesia. Jika tidak ada fakta baru, balas [].`;
 
-export function getMemoryTexts(ownerId: string): string[] {
+export async function getMemoryTexts(ownerId: string): Promise<string[]> {
   try {
-    return getMemoryStore()
-      .list(ownerId)
-      .map((item) => item.content);
+    const items = await getMemoryStore().list(ownerId);
+    return items.map((item) => item.content);
   } catch (error) {
     console.error('[memory] gagal membaca memori', error);
     return [];
@@ -43,7 +42,7 @@ export async function extractMemories(input: {
   if (!userText || !input.assistantText.trim()) return 0;
 
   const store = getMemoryStore();
-  const existing = store.list(input.ownerId).map((item) => item.content);
+  const existing = (await store.list(input.ownerId)).map((item) => item.content);
   // Memakai streamText (bukan generateText): 9router membalas non-stream dengan
   // JSON diikuti "data: [DONE]" sehingga parser JSON non-stream gagal.
   const result = streamText({
