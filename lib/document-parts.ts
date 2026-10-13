@@ -8,7 +8,7 @@ import type { FileUIPart, UIMessage } from 'ai';
 /** Ukuran file dokumen asli maksimal sebelum dibaca server. */
 export const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024;
 
-export const MAX_DOCUMENTS_PER_MESSAGE = 3;
+export const MAX_DOCUMENTS_PER_MESSAGE = 10;
 
 /** Batas karakter teks per dokumen. Lebih dari ini dipotong. */
 export const MAX_DOCUMENT_CHARS = 40_000;
@@ -16,7 +16,7 @@ export const MAX_DOCUMENT_CHARS = 40_000;
 /** Batas panjang data URL yang membawa teks dokumen (teks di-encode ulang). */
 export const MAX_DOCUMENT_URL_CHARS = 600_000;
 
-export const DOCUMENT_EXTENSIONS = ['pdf', 'docx', 'pptx', 'xlsx', 'txt', 'md', 'csv'] as const;
+export const DOCUMENT_EXTENSIONS = ['pdf', 'docx', 'pptx', 'xlsx', 'txt', 'md', 'csv', 'py', 'ipynb'] as const;
 
 export const DOCUMENT_ACCEPT = DOCUMENT_EXTENSIONS.map((ext) => `.${ext}`).join(',');
 

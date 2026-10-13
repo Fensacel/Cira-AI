@@ -131,6 +131,38 @@ async function extractPptxText(buffer: ArrayBuffer): Promise<string> {
   return sections.join('\n\n');
 }
 
+/**
+ * Mengubah isi file .ipynb (JSON) menjadi teks. Sel kode dan markdown diberi label dan urutan dipertahankan.
+ * Output sel (hasil eksekusi) tidak disertakan agar konteks tidak membengkak.
+ */
+export function notebookTextFromJson(json: string): string {
+  let notebook: unknown;
+  try {
+    notebook = JSON.parse(json);
+  } catch {
+    throw new DocumentError('File notebook (.ipynb) tidak valid.');
+  }
+  const cells = (notebook as { cells?: unknown })?.cells;
+  if (!Array.isArray(cells)) {
+    throw new DocumentError('File notebook (.ipynb) tidak valid.');
+  }
+
+  const sections: string[] = [];
+  for (const [index, cell] of cells.entries()) {
+    const type = (cell as { cell_type?: unknown })?.cell_type;
+    const source = (cell as { source?: unknown })?.source;
+    const body = Array.isArray(source)
+      ? source.filter((line): line is string => typeof line === 'string').join('')
+      : typeof source === 'string'
+        ? source
+        : '';
+    if (!body.trim()) continue;
+    const label = type === 'code' ? 'Kode' : type === 'markdown' ? 'Markdown' : 'Sel';
+    sections.push(`--- ${label} ${index + 1} ---\n${body}`);
+  }
+  return sections.join('\n\n');
+}
+
 async function extractRawText(file: File): Promise<string> {
   const ext = getFileExtension(file.name);
   const buffer = await file.arrayBuffer();
@@ -144,9 +176,12 @@ async function extractRawText(file: File): Promise<string> {
       return extractPptxText(buffer);
     case 'xlsx':
       return extractXlsxText(buffer);
+    case 'ipynb':
+      return notebookTextFromJson(new TextDecoder('utf-8').decode(buffer));
     case 'txt':
     case 'md':
     case 'csv':
+    case 'py':
       return new TextDecoder('utf-8').decode(buffer);
     default:
       throw new DocumentError('Format dokumen tidak didukung.');

@@ -2,6 +2,8 @@ import { taxSkills } from './tax-skills';
 import { financeSkills } from './finance-skills';
 import { mathSkills } from './math-skills';
 import { excelSkills } from './excel-skills';
+import { officeSkills } from './office-skills';
+import { arduinoSkills } from './arduino-skills';
 import { clipboardSkills } from './clipboard';
 import { workspaceSkills } from './workspace';
 import { webSkills } from './web';
@@ -15,6 +17,8 @@ export const skillTools = {
   ...financeSkills,
   ...mathSkills,
   ...excelSkills,
+  ...officeSkills,
+  ...arduinoSkills,
   ...clipboardSkills,
   ...workspaceSkills,
   ...webSkills,

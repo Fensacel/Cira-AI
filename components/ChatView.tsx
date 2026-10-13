@@ -48,11 +48,25 @@ function getMessageText(message: UIMessage): string {
 
 type ExportLink = { name: string; href: string };
 
+const EXPORT_TOOL_PART_TYPES = new Set<string>([
+  'tool-exportExcelTool',
+  'tool-exportCsvTool',
+  'tool-createDocxTool',
+  'tool-createPptxTool',
+  'tool-createArduinoSketchTool',
+]);
+
+type ExportToolPart = Extract<UIMessage['parts'][number], { state: string; output?: unknown }>;
+
+function isExportToolPart(part: UIMessage['parts'][number]): part is ExportToolPart {
+  return EXPORT_TOOL_PART_TYPES.has(part.type);
+}
+
 /** Ambil link unduhan dari hasil tool ekspor yang sukses. Nama file diambil dari basename path server. */
 function getExportLinks(message: UIMessage): ExportLink[] {
   const links: ExportLink[] = [];
   for (const part of message.parts) {
-    if (part.type !== 'tool-exportExcelTool' && part.type !== 'tool-exportCsvTool') {
+    if (!isExportToolPart(part)) {
       continue;
     }
     if (part.state !== 'output-available') continue;
@@ -230,31 +244,38 @@ export function ChatView({
     if (files.length === 0) return;
 
     setAttachError(null);
-    const room = MAX_IMAGES_PER_MESSAGE - attachments.length;
-    if (room <= 0) {
-      setAttachError(`Maksimal ${MAX_IMAGES_PER_MESSAGE} gambar per pesan.`);
-      return;
-    }
+    // Kuota gambar dan dokumen dihitung terpisah. Dokumen tidak ikut dibatasi MAX_IMAGES_PER_MESSAGE.
+    let images = attachments.filter((part) => !isDocumentPart(part)).length;
+    let documents = attachments.length - images;
+    let imageLimitHit = false;
+    let documentLimitHit = false;
 
     setProcessing(true);
     const added: FileUIPart[] = [];
     try {
-      for (const file of files.slice(0, room)) {
+      for (const file of files) {
         if (file.type.startsWith('image/')) {
+          if (images >= MAX_IMAGES_PER_MESSAGE) {
+            imageLimitHit = true;
+            continue;
+          }
           added.push(await imageFileToPart(file));
+          images += 1;
           continue;
         }
-        const docCount = attachments.filter(isDocumentPart).length + added.filter(isDocumentPart).length;
-        if (docCount >= MAX_DOCUMENTS_PER_MESSAGE) {
-          setAttachError(`Maksimal ${MAX_DOCUMENTS_PER_MESSAGE} dokumen per pesan.`);
+        if (documents >= MAX_DOCUMENTS_PER_MESSAGE) {
+          documentLimitHit = true;
           continue;
         }
         const part = await uploadDocument(file);
         rememberDocumentFile(file.name, file);
         added.push(part);
+        documents += 1;
       }
-      if (files.length > room) {
-        setAttachError(`Hanya ${room} lampiran lagi yang bisa ditambahkan.`);
+      if (imageLimitHit) {
+        setAttachError(`Maksimal ${MAX_IMAGES_PER_MESSAGE} gambar per pesan.`);
+      } else if (documentLimitHit) {
+        setAttachError(`Maksimal ${MAX_DOCUMENTS_PER_MESSAGE} dokumen per pesan.`);
       }
     } catch (error) {
       setAttachError(error instanceof Error ? error.message : 'Gagal memproses lampiran.');
