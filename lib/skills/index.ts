@@ -4,6 +4,7 @@ import { mathSkills } from './math-skills';
 import { excelSkills } from './excel-skills';
 import { clipboardSkills } from './clipboard';
 import { workspaceSkills } from './workspace';
+import { webSkills } from './web';
 
 /**
  * Semua skill tool. Daftarkan ke streamText({ tools: skillTools }) di route chat.
@@ -16,4 +17,5 @@ export const skillTools = {
   ...excelSkills,
   ...clipboardSkills,
   ...workspaceSkills,
+  ...webSkills,
 };

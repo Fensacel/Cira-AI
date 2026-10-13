@@ -41,10 +41,19 @@ export function ChatApp() {
   // Muat pesan chat aktif dari IndexedDB setiap kali berpindah chat.
   useEffect(() => {
     let active = true;
-    getChat(activeId).then((record) => {
-      if (!active) return;
-      setLoaded({ id: activeId, messages: record?.messages ?? [], modelId: record?.modelId ?? '' });
-    });
+    getChat(activeId)
+      .then((record) => {
+        if (!active) return;
+        setLoaded({ id: activeId, messages: record?.messages ?? [], modelId: record?.modelId ?? '' });
+      })
+      .catch((err: unknown) => {
+        if (!active) return;
+        // Tanpa catch, UI tertahan di "Memuat..." selamanya. Tampilkan chat kosong dan laporkan error.
+        console.error('[chat] gagal memuat riwayat dari IndexedDB', err);
+        const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        setLoadError(`Gagal memuat riwayat chat dari browser (${detail}). Coba muat ulang halaman.`);
+        setLoaded({ id: activeId, messages: [], modelId: '' });
+      });
     return () => {
       active = false;
     };
@@ -62,7 +71,12 @@ export function ChatApp() {
   const current = loaded?.id === activeId ? loaded : null;
 
   if (current === null) {
-    return <div className="flex h-dvh items-center justify-center text-zinc-500">Memuat...</div>;
+    // suppressHydrationWarning: extension browser (mis. bis_skin_checked) bisa menambah atribut sebelum hydrate.
+    return (
+      <div className="flex h-dvh items-center justify-center text-zinc-500" suppressHydrationWarning>
+        Memuat...
+      </div>
+    );
   }
 
   return (

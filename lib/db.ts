@@ -20,16 +20,23 @@ interface AigwehDB extends DBSchema {
 }
 
 const DB_NAME = 'aigweh';
-const DB_VERSION = 1;
+// Naik dari 1 ke 3 karena browser sudah punya database aigweh versi 2 dari build lain.
+// Versi yang lebih rendah dari yang ada di browser menyebabkan VersionError.
+const DB_VERSION = 3;
 
 let dbPromise: Promise<IDBPDatabase<AigwehDB>> | undefined;
 
 function getDb(): Promise<IDBPDatabase<AigwehDB>> {
   if (!dbPromise) {
     dbPromise = openDB<AigwehDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        const store = db.createObjectStore('chats', { keyPath: 'id' });
-        store.createIndex('updatedAt', 'updatedAt');
+      upgrade(db, _oldVersion, _newVersion, transaction) {
+        // Idempotent: aman dijalankan dari versi 0, 1, atau 2.
+        const store = db.objectStoreNames.contains('chats')
+          ? transaction.objectStore('chats')
+          : db.createObjectStore('chats', { keyPath: 'id' });
+        if (!store.indexNames.contains('updatedAt')) {
+          store.createIndex('updatedAt', 'updatedAt');
+        }
       },
     });
   }
