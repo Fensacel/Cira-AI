@@ -10,11 +10,10 @@ const CONTENT_TYPES: Record<string, string> = {
   '.csv': 'text/csv; charset=utf-8',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  '.ino': 'text/plain; charset=utf-8',
 };
 
-/** Hanya nama file hasil ekspor (huruf, angka, spasi, _, -) dengan ekstensi xlsx, csv, docx, pptx, atau ino. */
-const SAFE_FILE = /^[a-zA-Z0-9 _-]{1,100}\.(xlsx|csv|docx|pptx|ino)$/;
+/** Hanya nama file hasil ekspor biner (huruf, angka, spasi, _, -) dengan ekstensi xlsx, docx, atau pptx. */
+const SAFE_FILE = /^[a-zA-Z0-9 _-]{1,100}\.(xlsx|docx|pptx)$/;
 
 export async function GET(
   _req: Request,

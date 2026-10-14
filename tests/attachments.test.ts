@@ -56,11 +56,9 @@ describe('validateAttachments', () => {
   });
 
   it('menolak lebih dari batas per request termasuk riwayat', () => {
-    const messages = [
-      userMessage('1', MAX_IMAGES_PER_MESSAGE),
-      userMessage('2', MAX_IMAGES_PER_MESSAGE),
-      userMessage('3', MAX_IMAGES_PER_REQUEST - 2 * MAX_IMAGES_PER_MESSAGE + 1),
-    ];
+    const fullMessages = Math.floor(MAX_IMAGES_PER_REQUEST / MAX_IMAGES_PER_MESSAGE);
+    const messages = Array.from({ length: fullMessages }, (_, i) => userMessage(String(i), MAX_IMAGES_PER_MESSAGE));
+    messages.push(userMessage('extra', 1));
     expect(validateAttachments(messages)).toContain(String(MAX_IMAGES_PER_REQUEST));
   });
 });

@@ -18,7 +18,7 @@ export const MAX_IMAGE_DATA_URL_CHARS = 2_000_000;
 export const MAX_IMAGES_PER_MESSAGE = 4;
 
 /** Total gambar per request, termasuk riwayat, karena seluruh riwayat dikirim ulang. */
-export const MAX_IMAGES_PER_REQUEST = 6;
+export const MAX_IMAGES_PER_REQUEST = 100;
 
 const IMAGE_DATA_URL = /^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+=*$/;
 

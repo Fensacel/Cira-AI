@@ -11,3 +11,7 @@ next-env.d.ts
 data/
 .DS_Store
 npm-debug.log*
+
+# Hasil generate (dokumen, sketch, dan file kerja) jangan di-push
+exports/
+workspace/

@@ -40,6 +40,11 @@ describe('getBoardInfo', () => {
     expect(mega.spi).toEqual({ mosi: 51, miso: 50, sck: 52, ss: 53 });
   });
 
+  it('Nano hanya punya pin digital D0-D13, A6 dan A7 bukan digital', () => {
+    expect(getBoardInfo('nano').digitalPins).toBe('D0-D13');
+    expect(getBoardInfo('nano').analogPins).toContain('A7');
+  });
+
   it('semua board punya sumber data', () => {
     for (const board of Object.values(BOARDS)) {
       expect(board.source).toContain('Arduino');

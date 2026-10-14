@@ -1,7 +1,3 @@
-import { mkdir, writeFile } from 'fs/promises';
-import path from 'path';
-import { EXPORT_DIR } from './excel';
-
 export const BOARD_IDS = ['uno', 'nano', 'mega2560'] as const;
 export type BoardId = (typeof BOARD_IDS)[number];
 
@@ -44,7 +40,8 @@ export const BOARDS: Record<BoardId, BoardInfo> = {
     name: 'Arduino Nano',
     mcu: 'ATmega328P',
     logicVoltage: '5V',
-    digitalPins: 'D0-D13 (A0-A7 juga bisa dipakai sebagai digital)',
+    // A6 dan A7 hanya input analog, tidak bisa digitalWrite/digitalRead.
+    digitalPins: 'D0-D13',
     pwmPins: [3, 5, 6, 9, 10, 11],
     analogPins: ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7'],
     interruptPins: [2, 3],
@@ -92,9 +89,4 @@ export function validateSketch(code: string): string | null {
   return null;
 }
 
-export async function writeSketch(sketchName: string, code: string): Promise<string> {
-  await mkdir(EXPORT_DIR, { recursive: true });
-  const filePath = path.join(EXPORT_DIR, `${sketchName}.ino`);
-  await writeFile(filePath, code, 'utf8');
-  return filePath;
-}
+

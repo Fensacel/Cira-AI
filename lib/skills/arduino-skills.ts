@@ -1,18 +1,11 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { errorResult } from './shared';
-import {
-  BOARD_IDS,
-  MAX_SKETCH_CHARS,
-  getBoardInfo,
-  sketchBaseName,
-  validateSketch,
-  writeSketch,
-} from './arduino';
+import { BOARD_IDS, MAX_SKETCH_CHARS, getBoardInfo, sketchBaseName, validateSketch } from './arduino';
 
 export const createArduinoSketchTool = tool({
   description:
-    'Buat file sketch Arduino (.ino) dari kode C++ Arduino. Kode wajib berisi void setup() dan void loop(). Mengembalikan path file. Tool ini TIDAK mengompilasi dan TIDAK meng-upload ke board.',
+    'Buat sketch Arduino (.ino) dari kode C++ Arduino. Kode wajib berisi void setup() dan void loop(). Mengembalikan nama file dan isi kode untuk ditampilkan di chat (tidak disimpan ke disk). Tool ini TIDAK mengompilasi dan TIDAK meng-upload ke board.',
   inputSchema: z.object({
     fileName: z.string().min(1).max(100).describe('Nama sketch, contoh blink_led. Huruf, angka, dan garis bawah'),
     code: z.string().min(1).max(MAX_SKETCH_CHARS).describe('Isi lengkap file .ino'),
@@ -21,9 +14,12 @@ export const createArduinoSketchTool = tool({
     try {
       const problem = validateSketch(code);
       if (problem) return errorResult(new Error(problem));
-      const sketchName = sketchBaseName(fileName);
-      const filePath = await writeSketch(sketchName, code);
-      return { success: true, filePath, lines: code.split('\n').length };
+      return {
+        success: true,
+        fileName: `${sketchBaseName(fileName)}.ino`,
+        code,
+        lines: code.split('\n').length,
+      };
     } catch (err) {
       return errorResult(err);
     }

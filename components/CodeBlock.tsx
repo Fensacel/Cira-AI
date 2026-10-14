@@ -53,12 +53,12 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
       </div>
       {html ? (
         <div
-          className="overflow-x-auto font-mono text-[13px] leading-[1.55] [&_pre]:bg-surface-container-lowest [&_pre]:p-4 sm:[&_pre]:p-5"
+          className="min-w-0 overflow-hidden font-mono text-[13px] leading-[1.55] [&_pre]:w-full [&_pre]:overflow-x-auto [&_pre]:bg-surface-container-lowest [&_pre]:p-4 sm:[&_pre]:p-5"
           // Output shiki sudah meng-escape isi kode; sumber hanya dari jawaban model.
           dangerouslySetInnerHTML={{ __html: html }}
         />
       ) : (
-        <pre className="overflow-x-auto bg-surface-container-lowest p-4 font-mono text-[13px] leading-[1.55] text-on-surface sm:p-5">
+        <pre className="w-full overflow-x-auto bg-surface-container-lowest p-4 font-mono text-[13px] leading-[1.55] text-on-surface sm:p-5">
           <code>{code}</code>
         </pre>
       )}

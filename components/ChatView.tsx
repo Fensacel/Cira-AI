@@ -25,6 +25,7 @@ import type { ChatRecord } from '@/lib/db';
 import { getChatSession, regenerateChatMessage, sendChatMessage } from '@/lib/chat-registry';
 import type { ChatMetadata, ModelOption } from '@/lib/types';
 import { ChatSidebar } from './ChatSidebar';
+import { CodeBlock } from './CodeBlock';
 import { MarkdownView } from './MarkdownView';
 import { DocumentPreview } from './DocumentPreview';
 import { MemoryPanel } from './MemoryPanel';
@@ -48,13 +49,17 @@ function getMessageText(message: UIMessage): string {
 
 type ExportLink = { name: string; href: string };
 
+type InlineArtifact = { name: string; language: string; content: string };
+
+/** Tool yang menghasilkan file biner di folder exports dan diunduh lewat link. */
 const EXPORT_TOOL_PART_TYPES = new Set<string>([
   'tool-exportExcelTool',
-  'tool-exportCsvTool',
   'tool-createDocxTool',
   'tool-createPptxTool',
-  'tool-createArduinoSketchTool',
 ]);
+
+/** Tool yang mengembalikan isi teks (kode atau CSV) untuk ditampilkan di chat. */
+const INLINE_TOOL_PART_TYPES = new Set<string>(['tool-exportCsvTool', 'tool-createArduinoSketchTool']);
 
 type ExportToolPart = Extract<UIMessage['parts'][number], { state: string; output?: unknown }>;
 
@@ -77,6 +82,42 @@ function getExportLinks(message: UIMessage): ExportLink[] {
     links.push({ name, href: `/api/exports/${encodeURIComponent(name)}` });
   }
   return links;
+}
+
+function isInlineToolPart(part: UIMessage['parts'][number]): part is ExportToolPart {
+  return INLINE_TOOL_PART_TYPES.has(part.type);
+}
+
+/** Ambil isi kode/CSV dari hasil tool yang sukses untuk ditampilkan di chat. */
+function getInlineArtifacts(message: UIMessage): InlineArtifact[] {
+  const artifacts: InlineArtifact[] = [];
+  for (const part of message.parts) {
+    if (!isInlineToolPart(part)) continue;
+    if (part.state !== 'output-available') continue;
+    const output = part.output as { success?: boolean; fileName?: string; code?: string; csv?: string } | undefined;
+    if (!output?.success || !output.fileName) continue;
+    if (part.type === 'tool-createArduinoSketchTool' && output.code) {
+      artifacts.push({ name: output.fileName, language: 'cpp', content: output.code });
+    } else if (part.type === 'tool-exportCsvTool' && output.csv) {
+      artifacts.push({ name: output.fileName, language: 'csv', content: output.csv });
+    }
+  }
+  return artifacts;
+}
+
+function InlineArtifacts({ message }: { message: UIMessage }) {
+  const artifacts = getInlineArtifacts(message);
+  if (artifacts.length === 0) return null;
+  return (
+    <div className="flex flex-col">
+      {artifacts.map((artifact, index) => (
+        <div key={`${artifact.name}-${index}`}>
+          <p className="mt-3 font-mono text-[13px] text-on-surface-variant">{artifact.name}</p>
+          <CodeBlock code={artifact.content} language={artifact.language} />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function ExportLinks({ message }: { message: UIMessage }) {
@@ -424,6 +465,7 @@ export function ChatView({
                   </div>
                   <div className="max-w-[80%] text-[16px] leading-[1.6] text-on-surface">
                     <MarkdownView content={text} />
+                    <InlineArtifacts message={message} />
                     <ExportLinks message={message} />
                     <TokenStats metadata={getMessageMetadata(message)} />
                   </div>

@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir } from 'fs/promises';
 import path from 'path';
 import { z } from 'zod';
 
@@ -51,9 +51,12 @@ function toCellValue(value: CellValue): ExcelJS.CellValue {
   return value;
 }
 
-export async function writeWorkbook(fileName: string, sheets: ExportSheet[]): Promise<string> {
+/** Bangun workbook di memori. Tidak menulis ke disk, sehingga bisa dites. */
+export function buildWorkbook(sheets: ExportSheet[]): ExcelJS.Workbook {
   const workbook = new ExcelJS.Workbook();
   workbook.created = new Date();
+  // Paksa Excel menghitung ulang semua rumus saat file dibuka (ExcelJS tidak menyimpan nilai hasil).
+  workbook.calcProperties.fullCalcOnLoad = true;
 
   for (const sheetDef of sheets) {
     const sheet = workbook.addWorksheet(safeSheetName(sheetDef.name));
@@ -82,14 +85,19 @@ export async function writeWorkbook(fileName: string, sheets: ExportSheet[]): Pr
     }
   }
 
+  return workbook;
+}
+
+export async function writeWorkbook(fileName: string, sheets: ExportSheet[]): Promise<string> {
+  const workbook = buildWorkbook(sheets);
   await mkdir(EXPORT_DIR, { recursive: true });
   const filePath = path.join(EXPORT_DIR, `${fileName}.xlsx`);
   await workbook.xlsx.writeFile(filePath);
   return filePath;
 }
 
-/** CSV dengan BOM UTF-8 agar Excel membaca karakter Indonesia dengan benar. Rumus tidak diubah, ditulis sebagai teks. */
-export async function writeCsv(fileName: string, sheet: ExportSheet): Promise<string> {
+/** Isi CSV sebagai teks untuk ditampilkan di chat. Rumus tidak diubah, ditulis sebagai teks. */
+export function buildCsv(sheet: ExportSheet): string {
   const escape = (value: CellValue) => {
     if (value === null) return '';
     const text = String(value);
@@ -99,8 +107,5 @@ export async function writeCsv(fileName: string, sheet: ExportSheet): Promise<st
   for (const row of sheet.rows) {
     lines.push(sheet.columns.map((column) => escape(row[column.key] ?? null)).join(','));
   }
-  await mkdir(EXPORT_DIR, { recursive: true });
-  const filePath = path.join(EXPORT_DIR, `${fileName}.csv`);
-  await writeFile(filePath, `\uFEFF${lines.join('\r\n')}`, 'utf8');
-  return filePath;
+  return lines.join('\n');
 }
