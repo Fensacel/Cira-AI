@@ -6,7 +6,7 @@ import type { FileUIPart, UIMessage } from 'ai';
  */
 
 /** Ukuran file dokumen asli maksimal sebelum dibaca server. */
-export const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024;
+export const MAX_DOCUMENT_BYTES = 16 * 1024 * 1024;
 
 export const MAX_DOCUMENTS_PER_MESSAGE = 10;
 
@@ -75,7 +75,7 @@ export function inlineDocumentParts(messages: UIMessage[]): UIMessage[] {
 /** Dipanggil di browser. Mengunggah dokumen ke server dan mengembalikan file part berisi teksnya. */
 export async function uploadDocument(file: File): Promise<FileUIPart> {
   if (file.size > MAX_DOCUMENT_BYTES) {
-    throw new Error('Ukuran dokumen maksimal 15 MB.');
+    throw new Error('Ukuran dokumen maksimal 16 MB.');
   }
   const form = new FormData();
   form.append('file', file);

@@ -17,7 +17,7 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: 'File tidak ditemukan.' }, { status: 400 });
   }
   if (file.size > MAX_DOCUMENT_BYTES) {
-    return Response.json({ error: 'Ukuran dokumen maksimal 15 MB.' }, { status: 413 });
+    return Response.json({ error: 'Ukuran dokumen maksimal 16 MB.' }, { status: 413 });
   }
   const ext = getFileExtension(file.name);
   if (LEGACY_EXTENSIONS.includes(ext)) {
