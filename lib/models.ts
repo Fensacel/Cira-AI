@@ -4,10 +4,8 @@ import type { ModelOption } from './types';
 export type EnvLike = Record<string, string | undefined>;
 
 const DEFAULT_MODELS: ModelOption[] = [
-  { id: 'tokenharbor/deepseek-v4.1-flash:free', label: 'Deepseek V4.1 Flash' },
-  { id: 'tokenharbor/claude-haiku-5.5:free', label: 'Claude Haiku 5.5' },
-  { id: 'tokenharbor/mimo-v2.6-flash:free', label: 'Mimo V2.6 Flash' },
   { id: 'groq/openai/gpt-oss-120b', label: 'GPT OSS 120B' },
+  { id: 'TG/deepseek-v4.1-flash', label: 'Deepseek V4.1 Flash TG' },
   { id: 'openrouter/nvidia/nemotron-3-ultra-550b-a55b:free', label: 'Nemotron 3 Ultra 550B A55B'},
 ];
 
